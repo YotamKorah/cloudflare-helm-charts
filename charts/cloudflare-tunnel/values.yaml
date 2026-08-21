@@ -34,6 +34,23 @@ image:
 
 replicaCount: 2
 
+# The liveness probe, rendered verbatim into the container spec. Replace as much or as
+# little of it as you like; setting this to {} removes the probe entirely.
+#
+# Cloudflared has a /ready endpoint which returns 200 if and only if it has an active
+# connection to the edge. That makes failureThreshold: 1 (the chart's old hardcoded value)
+# restart the pod on any single blip in the Cloudflare edge path. cloudflared redials on
+# its own within seconds, so the restart does not help and instead re-registers into
+# connection slots the dying process still holds, producing dup_edge_conn registration
+# failures. Three consecutive failures (~30s) is the default instead.
+livenessProbe:
+  httpGet:
+    path: /ready
+    port: 2000
+  failureThreshold: 3
+  initialDelaySeconds: 10
+  periodSeconds: 10
+
 imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
